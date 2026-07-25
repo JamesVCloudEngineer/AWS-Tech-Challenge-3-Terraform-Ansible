@@ -1,0 +1,5 @@
+aws_region    = "us-east-1"
+instance_type = "t3.micro"
+key_name      = "james-project-key"
+bucket_name   = "aws-tech-challenge-3-jamesvictor-tfstate"
+project_name  = "tech-challenge-3"

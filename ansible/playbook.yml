@@ -1,0 +1,32 @@
+---
+- name: Configure web server with Nginx
+  hosts: webserver
+  become: true
+  tasks:
+    - name: Update apt package cache
+      apt:
+        update_cache: yes
+
+    - name: Install Nginx
+      apt:
+        name: nginx
+        state: present
+
+    - name: Deploy Hello World page
+      copy:
+        content: |
+          <!DOCTYPE html>
+          <html>
+          <head><title>Tech Challenge 3</title></head>
+          <body>
+            <h1>Hello, World!</h1>
+            <p>Deployed via Terraform and Ansible - James Victor</p>
+          </body>
+          </html>
+        dest: /var/www/html/index.html
+
+    - name: Ensure Nginx is running and enabled
+      service:
+        name: nginx
+        state: started
+        enabled: true
