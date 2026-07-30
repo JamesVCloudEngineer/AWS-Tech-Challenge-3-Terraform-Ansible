@@ -20,68 +20,9 @@ Provision AWS infrastructure using Terraform and configure it using Ansible, dep
 - An existing EC2 key pair in your AWS account (james-project-key)
 
 ## Project Structure
-## Results
 
-Successfully provisioned and configured a fully working AWS environment from 
-scratch using Infrastructure as Code. The deployed EC2 instance served a live 
-"Hello, World!" page over HTTP, confirming end-to-end automation from 
-infrastructure provisioning through application deployment.
-
-**Verification:**
-- `terraform apply` created all resources without errors (EC2, S3, IAM 
-role/instance profile, security group)
-- `ansible-playbook` completed with `changed=3, failed=0` — Nginx installed, 
-Hello World page deployed, service confirmed running and enabled
-- Hello World page confirmed reachable via the EC2 public IP in a browser
-
-*(Screenshots: terraform apply output, ansible-playbook recap, browser Hello 
-World page)*
-
-## Design Decisions & Key Learnings
-
-**Why split responsibilities between Terraform and Ansible?**
-Terraform's job stops at "does the infrastructure exist" — it provisions the EC2 
-instance, networking, IAM, and storage. Ansible's job starts once that 
-infrastructure is live — it handles configuration state on the running server 
-(installing Nginx, deploying content, managing the service). Keeping these 
-separate mirrors how real teams divide provisioning from configuration 
-management, and it means either layer can be swapped or scaled independently 
-later.
-
-**Why scope the security group to only SSH (22) and HTTP (80)?**
-Following least-privilege principles — the instance only needs inbound access for 
-administration (SSH) and serving the web page (HTTP). No unnecessary ports were 
-opened, reducing the attack surface.
-
-**Why exclude the .pem key and Terraform state files from version control?**
-The private key grants direct SSH access to the instance, and Terraform state 
-files can contain sensitive resource metadata (IPs, IDs, sometimes secrets) in 
-plaintext. Both are excluded via `.gitignore` to prevent credential leakage in a 
-public or shared repo.
-
-**Why a dynamic AMI lookup instead of a hardcoded AMI ID?**
-Hardcoded AMI IDs are region-specific and go stale as new Ubuntu images are 
-released. A dynamic lookup (via a Terraform data source) ensures the latest 
-Ubuntu 24.04 image is always used, and the code stays portable across AWS 
-regions.
-
-## What I'd Improve at Scale
-
-- **Remote state backend:** Currently using local Terraform state; in a team 
-environment I'd move this to an S3 backend with DynamoDB state locking to prevent 
-conflicting applies and enable collaboration.
-- **Dynamic Ansible inventory:** The current setup requires manually copying the 
-EC2 public IP into `inventory.ini` after each apply. At scale, I'd use 
-Terraform's output directly to generate a dynamic inventory file, removing that 
-manual step entirely.
-- **Secrets management:** SSH key handling is currently manual and local. In 
-production, I'd use AWS Systems Manager Session Manager or Secrets Manager to 
-eliminate the need for a distributed `.pem` file altogether.
-- **CI/CD integration:** This deployment is currently run manually from the 
-command line. Wiring this into a pipeline (Jenkins or GitHub Actions) would allow 
-`terraform plan` to run automatically on every pull request, with `apply` gated 
-behind manual approval. - terraform/ - main.tf, variables.tf, 
-outputs.tf, terraform.tfvars - ansible/ - inventory.ini, playbook.yml
+- terraform/ — main.tf, variables.tf, outputs.tf, terraform.tfvars
+- ansible/ — inventory.ini, playbook.yml
 - .gitignore
 - README.md
 
@@ -120,65 +61,66 @@ terraform destroy
 
 - The EC2 key pair (.pem file) is excluded from version control via .gitignore.
 - Terraform state files are excluded from version control, as they can contain sensitive resource details.
-- The security group is scoped to only SSH (22) and HTTP (80) - no unnecessary open ports.
+- The security group is scoped to only SSH (22) and HTTP (80) — no unnecessary open ports.
+
 ## Results
 
-Successfully provisioned and configured a fully working AWS environment from 
-scratch using Infrastructure as Code. The deployed EC2 instance served a live 
-"Hello, World!" page over HTTP, confirming end-to-end automation from 
+Successfully provisioned and configured a fully working AWS environment from
+scratch using Infrastructure as Code. The deployed EC2 instance served a live
+"Hello, World!" page over HTTP, confirming end-to-end automation from
 infrastructure provisioning through application deployment.
 
 **Verification:**
-- `terraform apply` created all resources without errors (EC2, S3, IAM 
+- `terraform apply` created all resources without errors (EC2, S3, IAM
 role/instance profile, security group)
-- `ansible-playbook` completed with `changed=3, failed=0` — Nginx installed, 
+- `ansible-playbook` completed with `changed=3, failed=0` — Nginx installed,
 Hello World page deployed, service confirmed running and enabled
 - Hello World page confirmed reachable via the EC2 public IP in a browser
 
-*(Screenshots: terraform apply output, ansible-playbook recap, browser Hello 
+*(Screenshots: terraform apply output, ansible-playbook recap, browser Hello
 World page)*
 
 ## Design Decisions & Key Learnings
 
 **Why split responsibilities between Terraform and Ansible?**
-Terraform's job stops at "does the infrastructure exist" — it provisions the EC2 
-instance, networking, IAM, and storage. Ansible's job starts once that 
-infrastructure is live — it handles configuration state on the running server 
-(installing Nginx, deploying content, managing the service). Keeping these 
-separate mirrors how real teams divide provisioning from configuration 
-management, and it means either layer can be swapped or scaled independently 
+Terraform's job stops at "does the infrastructure exist" — it provisions the EC2
+instance, networking, IAM, and storage. Ansible's job starts once that
+infrastructure is live — it handles configuration state on the running server
+(installing Nginx, deploying content, managing the service). Keeping these
+separate mirrors how real teams divide provisioning from configuration
+management, and it means either layer can be swapped or scaled independently
 later.
 
 **Why scope the security group to only SSH (22) and HTTP (80)?**
-Following least-privilege principles — the instance only needs inbound access for 
-administration (SSH) and serving the web page (HTTP). No unnecessary ports were 
+Following least-privilege principles — the instance only needs inbound access for
+administration (SSH) and serving the web page (HTTP). No unnecessary ports were
 opened, reducing the attack surface.
 
 **Why exclude the .pem key and Terraform state files from version control?**
-The private key grants direct SSH access to the instance, and Terraform state 
-files can contain sensitive resource metadata (IPs, IDs, sometimes secrets) in 
-plaintext. Both are excluded via `.gitignore` to prevent credential leakage in a 
+The private key grants direct SSH access to the instance, and Terraform state
+files can contain sensitive resource metadata (IPs, IDs, sometimes secrets) in
+plaintext. Both are excluded via `.gitignore` to prevent credential leakage in a
 public or shared repo.
 
 **Why a dynamic AMI lookup instead of a hardcoded AMI ID?**
-Hardcoded AMI IDs are region-specific and go stale as new Ubuntu images are 
-released. A dynamic lookup (via a Terraform data source) ensures the latest 
-Ubuntu 24.04 image is always used, and the code stays portable across AWS 
+Hardcoded AMI IDs are region-specific and go stale as new Ubuntu images are
+released. A dynamic lookup (via a Terraform data source) ensures the latest
+Ubuntu 24.04 image is always used, and the code stays portable across AWS
 regions.
 
 ## What I'd Improve at Scale
 
-- **Remote state backend:** Currently using local Terraform state; in a team 
-environment I'd move this to an S3 backend with DynamoDB state locking to prevent 
+- **Remote state backend:** Currently using local Terraform state; in a team
+environment I'd move this to an S3 backend with DynamoDB state locking to prevent
 conflicting applies and enable collaboration.
-- **Dynamic Ansible inventory:** The current setup requires manually copying the 
-EC2 public IP into `inventory.ini` after each apply. At scale, I'd use 
-Terraform's output directly to generate a dynamic inventory file, removing that 
+- **Dynamic Ansible inventory:** The current setup requires manually copying the
+EC2 public IP into `inventory.ini` after each apply. At scale, I'd use
+Terraform's output directly to generate a dynamic inventory file, removing that
 manual step entirely.
-- **Secrets management:** SSH key handling is currently manual and local. In 
-production, I'd use AWS Systems Manager Session Manager or Secrets Manager to 
+- **Secrets management:** SSH key handling is currently manual and local. In
+production, I'd use AWS Systems Manager Session Manager or Secrets Manager to
 eliminate the need for a distributed `.pem` file altogether.
-- **CI/CD integration:** This deployment is currently run manually from the 
-command line. Wiring this into a pipeline (Jenkins or GitHub Actions) would allow 
-`terraform plan` to run automatically on every pull request, with `apply` gated 
+- **CI/CD integration:** This deployment is currently run manually from the
+command line. Wiring this into a pipeline (Jenkins or GitHub Actions) would allow
+`terraform plan` to run automatically on every pull request, with `apply` gated
 behind manual approval.
