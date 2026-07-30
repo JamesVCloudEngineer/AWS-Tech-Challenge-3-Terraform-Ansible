@@ -1,7 +1,7 @@
 # Tech Challenge 3: Infrastructure as Code with Terraform and Ansible
 
 **Author:** James Victor
-**Bootcamp Deliverable:** Cloud Engineer Coding Challenge 3
+**Project:** Cloud Engineer Coding Challenge 3
 
 ## Objective
 
